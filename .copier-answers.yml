@@ -1,0 +1,19 @@
+# Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
+_commit: v2.3.0
+_src_path: https://github.com/napari/napari-plugin-template
+display_name: Gribberish
+email: ian@earthmover.io
+full_name: Ian Hunt-Isaak
+github_repository_url: https://github.com/ianhi/napari-gribberish
+github_username_or_organization: ianhi
+include_reader_plugin: true
+include_sample_data_plugin: true
+include_widget_plugin: true
+include_writer_plugin: false
+install_dependabot: true
+install_precommit: true
+license: BSD-3
+module_name: napari_gribberish
+plugin_name: napari-gribberish
+short_description: Read GRIB (GRIB1/GRIB2) weather and ocean data into napari using
+    gribberish
