@@ -82,3 +82,9 @@ venv/
 
 # written by setuptools_scm
 **/_version.py
+
+# uv / local virtual environment
+.venv/
+
+# local GRIB test files (not committed)
+sample-data/

@@ -1,66 +1,74 @@
-import numpy as np
-
-from napari_gribberish._widget import (
-    ExampleQWidget,
-    ImageThreshold,
-    threshold_autogenerate_widget,
-    threshold_magic_widget,
-)
+from napari_gribberish import _widget
+from napari_gribberish._widget import GribVariableSelector
 
 
-def test_threshold_autogenerate_widget():
-    # because our 'widget' is a pure function, we can call it and
-    # test it independently of napari
-    im_data = np.random.random((100, 100))
-    thresholded = threshold_autogenerate_widget(im_data, 0.5)
-    assert thresholded.shape == im_data.shape
-    # etc.
-
-
-# make_napari_viewer is a pytest fixture that returns a napari viewer object
-# you don't need to import it, as long as napari is installed
-# in your testing environment
-def test_threshold_magic_widget(make_napari_viewer):
+def test_variable_selector_populates_and_loads(
+    make_napari_viewer, monkeypatch, grib_like_dataset
+):
+    monkeypatch.setattr(_widget, '_open_grib', lambda path: grib_like_dataset)
     viewer = make_napari_viewer()
-    layer = viewer.add_image(np.random.random((100, 100)))
+    widget = GribVariableSelector(viewer)
 
-    # our widget will be a MagicFactory or FunctionGui instance
-    my_widget = threshold_magic_widget()
+    # Simulate the user choosing a file.
+    widget._file_edit.value = 'sample.grib2'
+    widget._on_file_changed()
 
-    # if we 'call' this object, it'll execute our function
-    thresholded = my_widget(viewer.layers[0], 0.5)
-    assert thresholded.shape == layer.data.shape
-    # etc.
+    assert set(widget._var_select.choices) == {'tmp', 'gust'}
+    assert widget._load_button.enabled
+
+    # Load only one of the two variables.
+    widget._var_select.value = ['tmp']
+    widget._on_load_clicked()
+
+    assert len(viewer.layers) == 1
+    assert viewer.layers[0].name.startswith('tmp')
 
 
-def test_image_threshold_widget(make_napari_viewer):
+def test_blend_mode_makes_all_visible_and_additive(
+    make_napari_viewer, monkeypatch, grib_like_dataset
+):
+    monkeypatch.setattr(_widget, '_open_grib', lambda path: grib_like_dataset)
     viewer = make_napari_viewer()
-    layer = viewer.add_image(np.random.random((100, 100)))
-    my_widget = ImageThreshold(viewer)
+    widget = GribVariableSelector(viewer)
+    widget._file_edit.value = 'sample.grib2'
+    widget._on_file_changed()
 
-    # because we saved our widgets as attributes of the container
-    # we can set their values without having to 'interact' with the viewer
-    my_widget._image_layer_combo.value = layer
-    my_widget._threshold_slider.value = 0.5
+    widget._mode.value = 'blend'
+    widget._on_load_clicked()
 
-    # this allows us to run our functions directly and ensure
-    # correct results
-    my_widget._threshold_im()
     assert len(viewer.layers) == 2
+    assert all(layer.visible for layer in viewer.layers)
+    assert all(layer.blending == 'additive' for layer in viewer.layers)
+    assert not viewer.grid.enabled
 
 
-# capsys is a pytest fixture that captures stdout and stderr output streams
-def test_example_q_widget(make_napari_viewer, capsys):
-    # make viewer and add an image layer using our fixture
+def test_grid_mode_enables_grid_view(
+    make_napari_viewer, monkeypatch, grib_like_dataset
+):
+    monkeypatch.setattr(_widget, '_open_grib', lambda path: grib_like_dataset)
     viewer = make_napari_viewer()
-    viewer.add_image(np.random.random((100, 100)))
+    widget = GribVariableSelector(viewer)
+    widget._file_edit.value = 'sample.grib2'
+    widget._on_file_changed()
 
-    # create our widget, passing in the viewer
-    my_widget = ExampleQWidget(viewer)
+    widget._mode.value = 'grid'
+    widget._on_load_clicked()
 
-    # call our widget method
-    my_widget._on_click()
+    assert viewer.grid.enabled
+    assert all(layer.visible for layer in viewer.layers)
 
-    # read captured output and check that it's as we expected
-    captured = capsys.readouterr()
-    assert captured.out == 'napari has 1 layers\n'
+
+def test_variable_selector_handles_open_error(make_napari_viewer, monkeypatch):
+    def boom(path):
+        raise ValueError('bad file')
+
+    monkeypatch.setattr(_widget, '_open_grib', boom)
+    viewer = make_napari_viewer()
+    widget = GribVariableSelector(viewer)
+
+    widget._file_edit.value = 'broken.grib2'
+    widget._on_file_changed()
+
+    assert not widget._load_button.enabled
+    assert 'Could not open file' in widget._status.value
+    assert len(viewer.layers) == 0

@@ -3,4 +3,12 @@ try:
 except ImportError:
     __version__ = 'unknown'
 
-__all__ = ()
+from ._reader import napari_get_reader
+from ._sample_data import make_sample_data
+from ._widget import GribVariableSelector
+
+__all__ = (
+    'GribVariableSelector',
+    'make_sample_data',
+    'napari_get_reader',
+)

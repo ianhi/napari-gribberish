@@ -7,10 +7,15 @@ repos:
       - id: trailing-whitespace
       - id: check-yaml # checks for correct yaml syntax for github actions ex.
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.14.6
+    rev: v0.15.21
     hooks:
       - id: ruff-check
       - id: ruff-format
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v2.3.0
+    hooks:
+      - id: mypy
+        additional_dependencies: [numpy]
   - repo: https://github.com/napari/napari-plugin-checks
     rev: v0.3.0
     hooks:
