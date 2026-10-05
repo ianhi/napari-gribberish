@@ -63,7 +63,7 @@ Drag a GRIB file onto the napari window, or use `File ▸ Open`. From Python:
 import napari
 
 viewer = napari.Viewer()
-viewer.open("forecast.grib2", plugin="napari-gribberish")
+viewer.open('forecast.grib2', plugin='napari-gribberish')
 napari.run()
 ```
 
@@ -108,7 +108,9 @@ directly with:
 ```python
 import xarray as xr
 
-ds = xr.open_dataset("forecast.grib2", engine="gribberish", collapse_groups=True)
+ds = xr.open_dataset(
+    'forecast.grib2', engine='gribberish', collapse_groups=True
+)
 ```
 
 ## Contributing
